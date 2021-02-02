@@ -6,11 +6,11 @@ It has been optimized to support GNMI telemetry as produced by SONiC.
 
 
 ### Configuration
-
+SONiC---Telegraf---InfluxDB
 ```toml
 [[inputs.sonic_telemetry_gnmi]]
-  ## Address and port of the GNMI GRPC server
-  addresses = ["localhost:8080"]
+  ## Address and port of the GNMI GRPC server，which should be a SONiC Switch with Telemetry enabled.
+  addresses = ["10.10.39.39:8080"]
 
   ## define credentials
   username = "admin"
@@ -35,7 +35,7 @@ It has been optimized to support GNMI telemetry as produced by SONiC.
   ## See: https://github.com/openconfig/reference/blob/master/rpc/gnmi/gnmi-specification.md#222-paths
   # origin = ""
   # prefix = ""
-  target = "OC-YANG"
+  target = "COUNTERS_DB"
 
   ## Define additional aliases to map telemetry encoding paths to simple measurement names
   # [inputs.sonic_telemetry_gnmi.aliases]
@@ -52,18 +52,26 @@ It has been optimized to support GNMI telemetry as produced by SONiC.
     ## and path to a specific substructe inside it that should be subscribed to (similar to an XPath)
     ## YANG models can be found e.g. here: https://sonic_mgmt_ip_address/ui
     origin = ""
-    path = "/openconfig-interfaces:interfaces/interface[name=Ethernet0]/state/counters"
+    path = "/COUNTERS/Ethernet0"
 
     # Subscription mode (one of: "target_defined", "sample", "on_change") and interval
-    subscription_mode = "target_defined"
-    sample_interval = "20s"
+    subscription_mode = "sample"
+    sample_interval = "5s"
 
     ## Suppress redundant transmissions when measured values are unchanged
     # suppress_redundant = false
 
     ## If suppression is enabled, send updates at least every X seconds anyway
     # heartbeat_interval = "60s"
+ [[outputs.influxdb]]
+    urls = ["http://172.17.0.5:8086"]
+    database = "sonic_telemetry"
+    timeout = "5s"
+    username = "root"
+    password = "root"
 ```
+### Validation
+You should be able to find measurement "ifcounters" in database "sonic_telemetry",which could be treated as Grafana's data source.
 
 # SONiC FRR Input Plugin for BGP Neighbors
 This Input plugin give the following measurements per configured VRF and Address Family
